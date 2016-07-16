@@ -2,13 +2,16 @@
   (:gen-class))
 
 (def size 10)
+(def firstLoop? true)
 
 (defn create-rooms []
   (vec
     (for [row (range 0 size)]
       (vec
         (for [col (range 0 size)]
-          {:row row :col col :visited? false :bottom? true :right? true})))))
+          (if (and (= row 0) (= col 0))
+            {:row row :col col :visited? false :bottom? true :right? true :isStart? true :end? false}
+            {:row row :col col :visited? false :bottom? true :right? true :isStart? false :end? false}))))))
 
 (defn possible-neighbors [rooms row col]
   (let [top-room (get-in rooms [(dec row) col])
@@ -23,10 +26,13 @@
          
 (defn random-neighbor [rooms row col]
   (let [neighbors (possible-neighbors rooms row col)]
-    (if (> (count neighbors) 0)
+    (if (> (count neighbors) 0) 
       (rand-nth neighbors)
-      nil)))
+      (if (:firstLoop? true) 
+        (assoc-in rooms [row col :end?] true)
+        nil))))
 
+       
 (defn tear-down-wall [rooms old-row old-col new-row new-col]
   (cond
     (< new-row old-row)
@@ -53,19 +59,22 @@
     (if next-room
       (create-maze-loop rooms row col (:row next-room) (:col next-room))
       rooms)))
-      
 
 (defn -main []
   (let [rooms (create-rooms)
-        rooms (create-maze rooms 0 0)]
-        
+        rooms (create-maze rooms 0 0)]    
     (doseq [row rooms]
       (print " _"))
     (println)
     (doseq [row rooms]
       (print "|")
       (doseq [room row]
-        (print (if (:bottom? room) "_" " "))
+        (cond    
+          (:isStart? room) (print "o")
+          (:bottom? room) (print "_")
+          :else ( print " "))
         (print (if (:right? room) "|" " ")))
-      (println))))
-    
+      (println))
+    (def firstLoop? false)))
+      
+      
