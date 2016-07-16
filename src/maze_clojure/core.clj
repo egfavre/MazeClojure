@@ -2,7 +2,7 @@
   (:gen-class))
 
 (def size 10)
-(def firstLoop? true)
+(def deadend? (atom false))
 
 (defn create-rooms []
   (vec
@@ -28,9 +28,7 @@
   (let [neighbors (possible-neighbors rooms row col)]
     (if (> (count neighbors) 0) 
       (rand-nth neighbors)
-      (if (:firstLoop? true) 
-        (assoc-in rooms [row col :end?] true)
-        nil))))
+      nil)))
 
        
 (defn tear-down-wall [rooms old-row old-col new-row new-col]
@@ -50,7 +48,11 @@
   (let [new-rooms (tear-down-wall rooms old-row old-col new-row new-col)
         new-rooms (create-maze new-rooms new-row new-col)]
     (if (= rooms new-rooms)
-      rooms
+      (if (not @deadend?)
+        (do
+          (reset! deadend? true)
+          (assoc-in rooms [old-row old-col :end?] true))
+        rooms)
       (create-maze-loop new-rooms old-row old-col new-row new-col))))
 
 (defn create-maze [rooms row col]
@@ -71,10 +73,11 @@
       (doseq [room row]
         (cond    
           (:isStart? room) (print "o")
+          (:end? room) (print "x")
           (:bottom? room) (print "_")
           :else ( print " "))
         (print (if (:right? room) "|" " ")))
-      (println))
-    (def firstLoop? false)))
+      (println))))
+    
       
       
